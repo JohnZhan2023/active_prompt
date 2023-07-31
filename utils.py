@@ -18,6 +18,7 @@ from pathlib import Path
 from tqdm import tqdm
 import pdb
 
+API_KEY = "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"
 # define for no solution if GPT cannot generate a valid solution
 # here define a magic number for the convenience of variance calculation
 NO_SOLUTION = '-10086'
@@ -196,6 +197,7 @@ def create_input_prompt(args, qa_pairs)->str:
             x.append(line["question"])
             y.append(line["pred_ans"])
         if qa_pairs!=[]:
+#add the validation data as prompt
             for qa_pair in qa_pairs:
                 x.append(qa_pair["question"])
                 y.append(qa_pair["answer"])            
@@ -254,3 +256,27 @@ def find_most_frequent(arr, n):
     arr_acounts = Counter(arr[:n])
     most_frequent_item, frequency = arr_acounts.most_common(1)[0]
     return frequency, most_frequent_item
+
+
+#由于logdifference_result文件中没有完整的answer，所以我根据序号回到dataset中将ques与ans拼接，形成prompt
+#不过由于zjh本人不太熟悉json相关使用，又时间有限，可能这个写法有点耗时
+def create_gpt_test_input_prompt(args)->str:
+    x, y , z= [], [], []
+    with open(args.prompt_num_path, encoding="utf-8") as f:
+        json_data = json.load(f)
+        for line in json_data:
+            z.append(line["dataset_idx"])
+        with open(args.prompt_source_path, encoding="utf-8") as f2:
+            for z_val in z:
+                print(z_val)
+                f2.seek(0)  # 重置文件指针到文件开头
+                for i, line in enumerate(f2):
+                    json_data = json.loads(line)
+                    if i==z_val:
+                        x.append(json_data["question"])
+                        y.append(json_data["answer"])            
+    index_list = list(range(len(x)))
+    prompt_text=""
+    for i in index_list:
+        prompt_text += x[i] + " " + y[i] + "\n\n"
+    return prompt_text
