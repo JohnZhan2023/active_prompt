@@ -222,7 +222,7 @@ def arg_parser():
         "--max_length_cot", type=int, default=256, help="maximum length of output tokens by model for reasoning extraction"
     )
     parser.add_argument(
-        "--qes_limit", type=int, default=50, help="whether to limit test dataset size. if 0, the dataset size is unlimited and we use all the samples in the dataset for testing."
+        "--qes_limit", type=int, default=15, help="whether to limit test dataset size. if 0, the dataset size is unlimited and we use all the samples in the dataset for testing."
     )
     parser.add_argument(
         "--api_time_interval", type=float, default=1.0, help="how many seconds to sleep between each request"

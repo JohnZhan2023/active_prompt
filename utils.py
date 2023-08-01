@@ -272,7 +272,7 @@ def create_gpt_test_input_prompt(args)->str:
                         combine=json_data["answer"].split("\n")
                         one_prompt="".join(combine)
                         one_prompt=one_prompt.replace('####', ' Therefore the answer is')
-                        one_prompt=one_prompt.replace('$', '')
+                        #one_prompt=one_prompt.replace('$', '')
                         y.append(one_prompt)            
     index_list = list(range(len(x)))
     prompt_text=""
