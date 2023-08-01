@@ -18,7 +18,7 @@ from pathlib import Path
 from tqdm import tqdm
 import pdb
 
-API_KEY = "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"
+API_KEY = "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"
 # define for no solution if GPT cannot generate a valid solution
 # here define a magic number for the convenience of variance calculation
 NO_SOLUTION = '-10086'
@@ -276,7 +276,7 @@ def create_gpt_test_input_prompt(args)->str:
     index_list = list(range(len(x)))
     prompt_text=""
     for i in index_list:
-        prompt_text += "Q:" + x[i] + "\n"+ "A:"  + y[i] + "\n"
+        prompt_text += "Q: " + x[i] + "\n"+ "A: "  + y[i] + "\n\n"
     #prompt_text+= "Let's think step by step."
     #由于cot_inference中已经有添加Let's think step by step的部分，这里无需再次添加
     return prompt_text

@@ -42,7 +42,7 @@ def main():
     if args.qes_limit == 0:
         args.qes_limit = len(dataloader)
     
-    correct, wrong_list, QA_record = inference_cot(args, dataloader, args.qes_limit, input_prompt)
+    correct, wrong_list, QA_record = inference_cot_gpt(args, dataloader, args.qes_limit, input_prompt)
     print(f"correct_num: {correct}")
     print(f"total: {args.qes_limit}")
     print(f"Accuracy: {correct / (args.qes_limit)}")
@@ -132,6 +132,64 @@ def inference_cot(args, question_pool, qes_limit, given_prompt):
             correct += 1
         else:
             wrong_list.append({'idx':qes['question_idx'], 'pred_ans':pred_ans['answer'], 'GT':qes['answer']})
+
+        qes_count += 1
+
+    return correct, wrong_list, QA_record
+def inference_cot_gpt(args, question_pool, qes_limit, given_prompt):
+    correct = 0
+    qes_count = 0
+    wrong_list = []
+    QA_record = []
+
+    for qes_num, qes in enumerate(question_pool):
+        if qes_limit is not None and qes_count == qes_limit:
+            break
+        # create a list for each question to record all answers generated from self-consistency
+        all_self_consistency_ans = []
+        
+        if args.dataset == "last_letters" and args.use_code_style_prompt is True:
+            # code style prompt
+            prompt = given_prompt + "Q: " + qes['question'] + "\nA: Let's think step by step in Python."
+        else:
+            prompt = given_prompt + "Q: " + qes['question'] + "\nA: Let's think step by step."
+        prompt_list = [prompt]
+
+        # enable self-consistency if multipath > 1
+        for path in range(0, args.multipath):
+            responses = GPT3_request(model=args.model, input_prompt=prompt_list, max_tokens=args.max_length_cot, time_interval=args.api_time_interval,
+                                      temperature=args.temperature, stop='\n')
+
+            pred_ans = answer_extraction(args, responses)
+
+            # create a dict to record each Q&A for later review purposes
+            QA = {}
+            QA['qes_idx'] = qes['question_idx']
+            QA['Q'] = qes['question']
+            QA['A'] = responses['choices'][0]['text']
+            QA_record.append(QA)
+
+            # output current inference result (only works when self-consistency is not enable)
+            if args.multipath == 1:
+
+                print('-' * 20)
+                print(f"Question number: {qes_num}")
+                print(f"Dataset index: {qes['question_idx']}")
+                print(f"Q: " + qes['question'])
+                if args.dataset == "last_letters" and args.use_code_style_prompt is True:
+                    print(f"A: Let's think step by step in Python." + responses['choices'][0]['text'])
+                else:
+                    print(f"A: Let's think step by step." + responses['choices'][0]['text'])
+                print(f"pred_ans: {pred_ans}")
+                print(f"GT: {qes['answer']}")
+
+            # record all answers into the self-consistency list to find the most frequent one
+            all_self_consistency_ans.append(pred_ans)
+
+        if pred_ans== qes['answer']:
+            correct += 1
+        else:
+            wrong_list.append({'idx':qes['question_idx'], 'pred_ans':pred_ans, 'GT':qes['answer']})
 
         qes_count += 1
 
