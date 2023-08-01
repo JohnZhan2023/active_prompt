@@ -3,6 +3,7 @@ import time
 import argparse
 import sys
 import json
+from transformers import pipeline
 
 
 def main():
@@ -26,11 +27,17 @@ def main():
         input_prompt = create_gpt_test_input_prompt(args)
     else:
         raise NotImplementedError
-    print(input_prompt)
+    
+    #输出拼接好的prompt以供检查
+    print('*****************************')
+    print("prompt:"+"\n"+input_prompt)
+    print('*****************************')
+
     start = time.time()
     print("Inference Start")
     if args.multipath != 1:
         print("Self-consistency Enabled, output each inference result is not available")
+
     # no limit on how many batches to inference, assume inference all batches
     if args.qes_limit == 0:
         args.qes_limit = len(dataloader)
@@ -67,7 +74,7 @@ def main():
         with open(path, 'w') as f:
             f.write(json.dumps(QA_record, indent=4))
 
-
+#实际上进行推理的函数，这里我没有调用源代码的gpt，而是选择了huggingface提供的pipeline，同时统计正确与错误的输出
 def inference_cot(args, question_pool, qes_limit, given_prompt):
     correct = 0
     qes_count = 0
@@ -89,16 +96,19 @@ def inference_cot(args, question_pool, qes_limit, given_prompt):
 
         # enable self-consistency if multipath > 1
         for path in range(0, args.multipath):
-            responses = GPT3_request(model=args.model, input_prompt=prompt_list, max_tokens=args.max_length_cot, time_interval=args.api_time_interval,
-                                      temperature=args.temperature, stop='\n')
+            model_name = "distilbert-base-cased-distilled-squad"
+            model = pipeline("question-answering", model=model_name, tokenizer=model_name)
+            prompt = "\n".join(prompt_list)
+            responses = model(question=qes["question"],context=prompt)
+            
 
-            pred_ans = answer_extraction(args, responses)
+            pred_ans = responses
 
             # create a dict to record each Q&A for later review purposes
             QA = {}
             QA['qes_idx'] = qes['question_idx']
             QA['Q'] = qes['question']
-            QA['A'] = responses['choices'][0]['text']
+            QA['A'] = responses['answer']
             QA_record.append(QA)
 
             # output current inference result (only works when self-consistency is not enable)
@@ -109,33 +119,32 @@ def inference_cot(args, question_pool, qes_limit, given_prompt):
                 print(f"Dataset index: {qes['question_idx']}")
                 print(f"Q: " + qes['question'])
                 if args.dataset == "last_letters" and args.use_code_style_prompt is True:
-                    print(f"A: Let's think step by step in Python." + responses['choices'][0]['text'])
+                    print(f"A: Let's think step by step in Python." + responses['answer'])
                 else:
-                    print(f"A: Let's think step by step." + responses['choices'][0]['text'])
-                print(f"pred_ans: {pred_ans}")
+                    print(f"A: Let's think step by step." + responses['answer'])
+                print(f"pred_ans: {pred_ans['answer']}")
                 print(f"GT: {qes['answer']}")
 
             # record all answers into the self-consistency list to find the most frequent one
             all_self_consistency_ans.append(pred_ans)
 
-        final_consistent_ans = find_most_frequent(all_self_consistency_ans, args.multipath)[-1]
-
-        if final_consistent_ans == qes['answer']:
+        if qes["answer"] == pred_ans['answer']:
             correct += 1
         else:
-            wrong_list.append({'idx':qes['question_idx'], 'pred_ans':final_consistent_ans, 'GT':qes['answer']})
+            wrong_list.append({'idx':qes['question_idx'], 'pred_ans':pred_ans['answer'], 'GT':qes['answer']})
 
         qes_count += 1
 
     return correct, wrong_list, QA_record
 
-
+#此处配置了各项信息，类似于写了一个shell命令
 def arg_parser():
     parser = argparse.ArgumentParser(description="CoT")
     parser.add_argument("--random_seed", type=int, default=1, help="random seed")
     parser.add_argument(
         "--dataset", type=str, default="gsm8k", choices=["gsm8k","svamp", "aqua", "csqa", "asdiv", "last_letters", "addsub", "singleeq", "strategyqa", "multiarith"], help="dataset to inference"
     )
+    #我的做法是在得到的result中提取序号，再回到数据集中去提取问题拼接为prompt，所以这里需要两个路径
     parser.add_argument(
         "--prompt_source_path", type=str, default="./dataset/GSM8K/train.jsonl", help="prompts to use"
     )
@@ -155,7 +164,7 @@ def arg_parser():
         "--max_length_cot", type=int, default=256, help="maximum length of output tokens by model for reasoning extraction"
     )
     parser.add_argument(
-        "--qes_limit", type=int, default=3, help="whether to limit test dataset size. if 0, the dataset size is unlimited and we use all the samples in the dataset for testing."
+        "--qes_limit", type=int, default=50, help="whether to limit test dataset size. if 0, the dataset size is unlimited and we use all the samples in the dataset for testing."
     )
     parser.add_argument(
         "--api_time_interval", type=float, default=1.0, help="how many seconds to sleep between each request"
