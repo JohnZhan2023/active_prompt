@@ -18,7 +18,7 @@ from pathlib import Path
 from tqdm import tqdm
 import pdb
 
-API_KEY = "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"
+API_KEY = "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"
 # define for no solution if GPT cannot generate a valid solution
 # here define a magic number for the convenience of variance calculation
 NO_SOLUTION = '-10086'
@@ -272,11 +272,14 @@ def create_gpt_test_input_prompt(args)->str:
                         combine=json_data["answer"].split("\n")
                         one_prompt="".join(combine)
                         one_prompt=one_prompt.replace('####', ' Therefore the answer is')
+                        one_prompt=one_prompt.replace('$', '')
                         y.append(one_prompt)            
     index_list = list(range(len(x)))
     prompt_text=""
     for i in index_list:
         prompt_text += "Q: " + x[i] + "\n"+ "A: "  + y[i] + "\n\n"
+    #由于GSM8K数据集中使用了calculator annotation，这会影响我们的prompt，所以我们删除
+    prompt_text=re.sub(r'<<.*?>>','',prompt_text)
     #prompt_text+= "Let's think step by step."
     #由于cot_inference中已经有添加Let's think step by step的部分，这里无需再次添加
     return prompt_text
