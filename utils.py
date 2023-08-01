@@ -252,10 +252,6 @@ def answer_extraction(args, responses):
     return pred_ans
 
 
-def find_most_frequent(arr, n):
-    arr_acounts = Counter(arr[:n])
-    most_frequent_item, frequency = arr_acounts.most_common(1)[0]
-    return frequency, most_frequent_item
 
 
 #由于logdifference_result文件中没有完整的answer，所以我根据序号回到dataset中将ques与ans拼接，形成prompt
@@ -268,16 +264,19 @@ def create_gpt_test_input_prompt(args)->str:
             z.append(line["dataset_idx"])
         with open(args.prompt_source_path, encoding="utf-8") as f2:
             for z_val in z:
-                print(z_val)
                 f2.seek(0)  # 重置文件指针到文件开头
                 for i, line in enumerate(f2):
                     json_data = json.loads(line)
                     if i==z_val:
                         x.append(json_data["question"])
-                        y.append(json_data["answer"])            
+                        combine=json_data["answer"].split("\n")
+                        one_prompt="".join(combine)
+                        one_prompt=one_prompt.replace('####', ' Therefore the answer is')
+                        y.append(one_prompt)            
     index_list = list(range(len(x)))
     prompt_text=""
     for i in index_list:
-        prompt_text += "Q:" + x[i] + "\n"+ "A:"  + y[i] + "\n\n"
-    prompt_text+= "Let's think step by step."
+        prompt_text += "Q:" + x[i] + "\n"+ "A:"  + y[i] + "\n"
+    #prompt_text+= "Let's think step by step."
+    #由于cot_inference中已经有添加Let's think step by step的部分，这里无需再次添加
     return prompt_text
