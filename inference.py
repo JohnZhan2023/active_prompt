@@ -74,6 +74,7 @@ def main():
         with open(path, 'w') as f:
             f.write(json.dumps(QA_record, indent=4))
 
+
 #实际上进行推理的函数，这里我没有调用源代码的gpt，而是选择了huggingface提供的pipeline，同时统计正确与错误的输出
 def inference_cot(args, question_pool, qes_limit, given_prompt):
     correct = 0
@@ -136,6 +137,8 @@ def inference_cot(args, question_pool, qes_limit, given_prompt):
         qes_count += 1
 
     return correct, wrong_list, QA_record
+
+
 def inference_cot_gpt(args, question_pool, qes_limit, given_prompt):
     correct = 0
     qes_count = 0
@@ -158,7 +161,7 @@ def inference_cot_gpt(args, question_pool, qes_limit, given_prompt):
         # enable self-consistency if multipath > 1
         for path in range(0, args.multipath):
             responses = GPT3_request(model=args.model, input_prompt=prompt_list, max_tokens=args.max_length_cot, time_interval=args.api_time_interval,
-                                      temperature=args.temperature, stop='\n')
+                                      temperature=args.temperature) #, stop='\n'
 
             pred_ans = answer_extraction(args, responses)
 
@@ -195,6 +198,7 @@ def inference_cot_gpt(args, question_pool, qes_limit, given_prompt):
 
     return correct, wrong_list, QA_record
 
+
 #此处配置了各项信息，类似于写了一个shell命令
 def arg_parser():
     parser = argparse.ArgumentParser(description="CoT")
@@ -222,10 +226,10 @@ def arg_parser():
         "--max_length_cot", type=int, default=256, help="maximum length of output tokens by model for reasoning extraction"
     )
     parser.add_argument(
-        "--qes_limit", type=int, default=15, help="whether to limit test dataset size. if 0, the dataset size is unlimited and we use all the samples in the dataset for testing."
+        "--qes_limit", type=int, default=10, help="whether to limit test dataset size. if 0, the dataset size is unlimited and we use all the samples in the dataset for testing."
     )
     parser.add_argument(
-        "--api_time_interval", type=float, default=1.0, help="how many seconds to sleep between each request"
+        "--api_time_interval", type=float, default=15, help="how many seconds to sleep between each request"
     )
     parser.add_argument(
         "--temperature", type=float, default=0, help=""

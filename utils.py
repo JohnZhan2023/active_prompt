@@ -18,7 +18,9 @@ from pathlib import Path
 from tqdm import tqdm
 import pdb
 
-API_KEY = "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"
+# API_KEY = "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"   # api-key-1
+# API_KEY = "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"   # api-key-2
+API_KEY = "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"   # api-key-3
 # define for no solution if GPT cannot generate a valid solution
 # here define a magic number for the convenience of variance calculation
 NO_SOLUTION = '-10086'
@@ -270,14 +272,14 @@ def create_gpt_test_input_prompt(args)->str:
                     if i==z_val:
                         x.append(json_data["question"])
                         combine=json_data["answer"].split("\n")
-                        one_prompt="".join(combine)
-                        one_prompt=one_prompt.replace('####', ' Therefore the answer is')
+                        one_prompt=". ".join(combine)
+                        one_prompt=one_prompt.replace('####', 'Therefore the answer is')
                         #one_prompt=one_prompt.replace('$', '')
                         y.append(one_prompt)            
     index_list = list(range(len(x)))
     prompt_text=""
     for i in index_list:
-        prompt_text += "Q: " + x[i] + "\n"+ "A: "  + y[i] + "\n\n"
+        prompt_text += "Q: " + x[i] + "\n"+ "A: "  + y[i] + "." + "\n\n"
     #由于GSM8K数据集中使用了calculator annotation，这会影响我们的prompt，所以我们删除
     prompt_text=re.sub(r'<<.*?>>','',prompt_text)
     #prompt_text+= "Let's think step by step."

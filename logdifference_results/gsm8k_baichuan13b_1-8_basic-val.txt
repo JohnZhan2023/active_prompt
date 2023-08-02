@@ -1,0 +1,34 @@
+[
+    {
+        "dataset_idx": 7455,
+        "log_difference": 9.043268203735352
+    },
+    {
+        "dataset_idx": 6208,
+        "log_difference": 6.421856880187988
+    },
+    {
+        "dataset_idx": 1458,
+        "log_difference": 6.376003265380859
+    },
+    {
+        "dataset_idx": 742,
+        "log_difference": 6.206546783447266
+    },
+    {
+        "dataset_idx": 5771,
+        "log_difference": 6.048258304595947
+    },
+    {
+        "dataset_idx": 5069,
+        "log_difference": 5.958477973937988
+    },
+    {
+        "dataset_idx": 3360,
+        "log_difference": 5.842838287353516
+    },
+    {
+        "dataset_idx": 6675,
+        "log_difference": 5.803745746612549
+    }
+]
