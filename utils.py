@@ -18,9 +18,8 @@ from pathlib import Path
 from tqdm import tqdm
 import pdb
 
-# API_KEY = "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"   # api-key-1
-# API_KEY = "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"   # api-key-2
-API_KEY = "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"   # api-key-3
+
+API_KEY = ""   # api-key: 1-3
 # define for no solution if GPT cannot generate a valid solution
 # here define a magic number for the convenience of variance calculation
 NO_SOLUTION = '-10086'
