@@ -156,9 +156,10 @@ def inference_cot_gpt(args, question_pool, qes_limit, given_prompt):
         prompt_list = [prompt]
 
         # enable self-consistency if multipath > 1
+        #之前输出结果为空的原因找到了: 把 openai 接口调用时的 stop="\n" 去掉就行. 因为生成的结果有时候莫名需要换行输出, 但终究是可以输出有效内容的
         for path in range(0, args.multipath):
             responses = GPT3_request(model=args.model, input_prompt=prompt_list, max_tokens=args.max_length_cot, time_interval=args.api_time_interval,
-                                      temperature=args.temperature, stop='\n')
+                                      temperature=args.temperature)
 
             pred_ans = answer_extraction(args, responses)
 

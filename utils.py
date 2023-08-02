@@ -18,7 +18,7 @@ from pathlib import Path
 from tqdm import tqdm
 import pdb
 
-API_KEY = "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"
+API_KEY = "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"
 # define for no solution if GPT cannot generate a valid solution
 # here define a magic number for the convenience of variance calculation
 NO_SOLUTION = '-10086'
@@ -272,7 +272,8 @@ def create_gpt_test_input_prompt(args)->str:
                         combine=json_data["answer"].split("\n")
                         one_prompt="".join(combine)
                         one_prompt=one_prompt.replace('####', ' Therefore the answer is')
-                        #one_prompt=one_prompt.replace('$', '')
+                        one_prompt=one_prompt.replace('.\n', '\n')
+                        one_prompt=one_prompt.replace('\n', '.')
                         y.append(one_prompt)            
     index_list = list(range(len(x)))
     prompt_text=""
